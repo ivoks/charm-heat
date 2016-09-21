@@ -26,6 +26,8 @@ requires:
   ha:
     interface: hacluster
     scope: container
+  contrail-api:
+    interface: contrail-api
 peers:
   cluster:
     interface: heat-ha

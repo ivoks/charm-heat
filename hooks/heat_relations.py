@@ -46,7 +46,8 @@ from charmhelpers.core.host import (
 
 from charmhelpers.fetch import (
     apt_install,
-    apt_update
+    apt_update,
+    configure_sources,
 )
 
 from charmhelpers.contrib.hahelpers.cluster import (
@@ -261,6 +262,22 @@ def identity_joined(rid=None):
     }
 
     relation_set(relation_id=rid, **relation_data)
+
+
+@hooks.hook('contrail-api-relation-joined')
+def contrail_joined(rid=None):
+    status_set('maintenance', 'Executing pre-install')
+    configure_sources(True, "contrail-sources", "contrail-keys")
+    status_set('maintenance', 'Installing Contrail package')
+    apt_install("contrail-heat", fatal=True)
+
+
+@hooks.hook('contrail-api-relation-changed')
+def contrail_changed(rid=None):
+    if 'contrail-api' not in CONFIGS.complete_contexts():
+        log('contrail-api relation incomplete. Peer not ready?')
+        return
+    CONFIGS.write_all()
 
 
 @hooks.hook('identity-service-relation-changed')

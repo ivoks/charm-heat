@@ -13,9 +13,16 @@
 # limitations under the License.
 
 import os
+from socket import gethostbyname
 
 from charmhelpers.contrib.openstack import context
-from charmhelpers.core.hookenv import config, leader_get
+from charmhelpers.core.hookenv import (
+    config,
+    leader_get,
+    related_units,
+    relation_get,
+    relation_ids,
+)
 from charmhelpers.core.host import pwgen
 from charmhelpers.contrib.hahelpers.cluster import (
     determine_apache_port,
@@ -48,6 +55,18 @@ class HeatIdentityServiceContext(context.IdentityServiceContext):
         ctxt['keystone_ec2_url'] = ec2_tokens
         ctxt['region'] = config('region')
         return ctxt
+
+
+class ContrailAPIContext(context.OSContextGenerator):
+    interfaces = ['contrail-api']
+
+    def __call__(self):
+        ctxs = [ { "contrail_api_ip": relation_get("vip", unit, rid) if
+                    relation_get("vip", unit, rid) \
+                    else gethostbyname(relation_get("private-address", unit, rid))
+                 for rid in relation_ids("contrail-api")
+                 for unit in related_units(rid) } ]
+        return ctxs[0] if ctxs else {}
 
 
 def get_encryption_key():

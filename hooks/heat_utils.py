@@ -49,6 +49,7 @@ from heat_context import (
     InstanceUserContext,
     HeatApacheSSLContext,
     HeatHAProxyContext,
+    ContrailAPIContext,
 )
 
 TEMPLATES = 'templates/'
@@ -104,7 +105,8 @@ CONFIG_FILES = OrderedDict([
                      context.SyslogContext(),
                      context.LogLevelContext(),
                      context.WorkerConfigContext(),
-                     context.BindHostContext()]
+                     context.BindHostContext(),
+                     ContrailAPIContext()]
     }),
     (HEAT_API_PASTE, {
         'services': [s for s in BASE_SERVICES if 'api' in s],
