@@ -74,7 +74,8 @@ class HeatBasicDeployment(OpenStackAmuletDeployment):
                           {'name': 'mysql'},
                           {'name': 'glance'},
                           {'name': 'nova-cloud-controller'},
-                          {'name': 'nova-compute'}]
+                          {'name': 'nova-compute'},
+                          {'name': 'contrail-configuration'}]
         super(HeatBasicDeployment, self)._add_services(this_service,
                                                        other_services)
 
@@ -85,6 +86,7 @@ class HeatBasicDeployment(OpenStackAmuletDeployment):
             'heat:amqp': 'rabbitmq-server:amqp',
             'heat:identity-service': 'keystone:identity-service',
             'heat:shared-db': 'mysql:shared-db',
+            'heat:contrail-api': 'contrail-configuration:contrail-api',
             'nova-compute:image-service': 'glance:image-service',
             'nova-compute:shared-db': 'mysql:shared-db',
             'nova-compute:amqp': 'rabbitmq-server:amqp',
@@ -108,7 +110,9 @@ class HeatBasicDeployment(OpenStackAmuletDeployment):
                        'enable-live-migration': 'False'}
         keystone_config = {'admin-password': 'openstack',
                            'admin-token': 'ubuntutesting'}
-        configs = {'nova-compute': nova_config, 'keystone': keystone_config}
+        contrail_config = {'vip': '1.2.3.4'}
+        configs = {'nova-compute': nova_config, 'keystone': keystone_config,
+                   'contrail-configuration': contrail_config}
         super(HeatBasicDeployment, self)._configure_services(configs)
 
     def _initialize_tests(self):
@@ -120,6 +124,7 @@ class HeatBasicDeployment(OpenStackAmuletDeployment):
         self.rabbitmq_sentry = self.d.sentry['rabbitmq-server'][0]
         self.nova_compute_sentry = self.d.sentry['nova-compute'][0]
         self.glance_sentry = self.d.sentry['glance'][0]
+        self.contrail_configuration = self.d.sentry['contrail-configuration'][0]
         u.log.debug('openstack release val: {}'.format(
             self._get_openstack_release()))
         u.log.debug('openstack release str: {}'.format(
@@ -451,6 +456,39 @@ class HeatBasicDeployment(OpenStackAmuletDeployment):
         ret = u.validate_relation_data(unit, relation, expected)
         if ret:
             message = u.relation_error('rabbitmq-server:heat amqp', ret)
+            amulet.raise_status(amulet.FAIL, msg=message)
+
+    def test_206_heat_contrail_api_relation(self):
+        """Verify the heat:contrail-api contrail-api relation data"""
+        u.log.debug('Checking heat:contrail-api contrail-api relation data...')
+        unit = self.heat_sentry
+        relation = ['contrail-api', 'contrail-configuration:contrail-api']
+        expected = {
+            'vip': u.not_null,
+            'private-address': u.valid_ip
+        }
+
+        ret = u.validate_relation_data(unit, relation, expected)
+        if ret:
+            message = u.relation_error('heat:contrail-api contrail-api', ret)
+            amulet.raise_status(amulet.FAIL, msg=message)
+
+    def test_207_contrail_api_heat_relation(self):
+        """Verify the contrail-configuration:contrail-api
+           contrail-api relation data"""
+        u.log.debug('Checking contrail-configuration:contrail-api
+                     contrail-api relation data...')
+        unit = self.contrail-configuration_sentry
+        relation = ['contrail-api', 'heat:contrail-api']
+        expected = {
+            'private-address': u.valid_ip,
+            'vip': u.not_null,
+        }
+
+        ret = u.validate_relation_data(unit, relation, expected)
+        if ret:
+            message = u.relation_error('contrail-configuration:contrail-api 
+                                                        contrail-api', ret)
             amulet.raise_status(amulet.FAIL, msg=message)
 
     def test_300_heat_config(self):
