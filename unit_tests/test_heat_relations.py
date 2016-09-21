@@ -76,6 +76,7 @@ TO_PATCH = [
     'get_hacluster_config',
     'get_iface_for_address',
     'get_netmask_for_address',
+    'configure_sources'
 ]
 
 
@@ -172,6 +173,19 @@ class HeatRelationTests(CharmTestCase):
             username='heat',
             vhost='openstack',
             relation_id=None)
+
+    def test_contrail_install(self):
+        repo = "contrail-sources"
+        keys = "contrail-keys"
+        relations.contrail_joined()
+        self.configure_sources.assert_called_with(True, repo, keys)
+        self.apt_install.assert_called_with('contrail-heat', fatal=True)
+
+    @patch.object(relations, 'CONFIGS')
+    def test_contrail_changed(self, configs):
+        configs.complete_contexts.return_value = ['contrail-api']
+        relations.contrail_changed()
+        self.assertTrue(configs.write_all.called)
 
     def test_amqp_joined_passes_relation_id(self):
         "Ensures relation_id correct passed to relation_set"
