@@ -476,7 +476,7 @@ class HeatBasicDeployment(OpenStackAmuletDeployment):
     def test_207_contrail_api_heat_relation(self):
         """Verify the contrail-configuration:contrail-api
            contrail-api relation data"""
-        u.log.debug('Checking contrail-configuration:contrail-api
+        u.log.debug('Checking contrail-configuration:contrail-api \
                      contrail-api relation data...')
         unit = self.contrail-configuration_sentry
         relation = ['contrail-api', 'heat:contrail-api']
@@ -487,7 +487,7 @@ class HeatBasicDeployment(OpenStackAmuletDeployment):
 
         ret = u.validate_relation_data(unit, relation, expected)
         if ret:
-            message = u.relation_error('contrail-configuration:contrail-api 
+            message = u.relation_error('contrail-configuration:contrail-api \
                                                         contrail-api', ret)
             amulet.raise_status(amulet.FAIL, msg=message)
 
